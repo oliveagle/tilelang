@@ -820,11 +820,11 @@ TL_DEVICE __nv_bfloat162 fma2(__nv_bfloat162 a, __nv_bfloat162 b,
 #if defined(__CUDA_ARCH__) && (__CUDA_ARCH__ >= 800)
   return __hfma2(a, b, c);
 #else
-  float a_x = __bfloat162float(a.x), a_y = __bfloat162float(a.y);
-  float b_x = __bfloat162float(b.x), b_y = __bfloat162float(b.y);
-  float c_x = __bfloat162float(c.x), c_y = __bfloat162float(c.y);
-  return __nv_bfloat162{__float2bfloat16(a_x * b_x + c_x),
-                        __float2bfloat16(a_y * b_y + c_y)};
+  // Manual bf16 FMA for sm_70 (V100) and other pre-Ampere GPUs
+  // __hfma only accepts __half, so we do scalar bf16 math with conversions
+  float fx = __bfloat162float(a.x) * __bfloat162float(b.x) + __bfloat162float(c.x);
+  float fy = __bfloat162float(a.y) * __bfloat162float(b.y) + __bfloat162float(c.y);
+  return __nv_bfloat162{__float2bfloat16(fx), __float2bfloat16(fy)};
 #endif
 }
 
